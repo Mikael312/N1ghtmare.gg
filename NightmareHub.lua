@@ -116,13 +116,13 @@ function showNotification(message)
 		end)
 	end
 	
-	-- Buat notification GUI
-	local screenGui = game.Players.LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("NotificationGui")
+	-- Buat notification GUI di COREGUI (FIXED)
+	local screenGui = CoreGui:FindFirstChild("NotificationGui")
 	if not screenGui then
 		screenGui = Instance.new("ScreenGui")
 		screenGui.Name = "NotificationGui"
 		screenGui.ResetOnSpawn = false
-		screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+		screenGui.Parent = CoreGui
 	end
 	
 	-- Calculate position untuk notif baru (di bawah semua notif yang ada)
@@ -278,7 +278,7 @@ local function protectGui(gui)
     end
 end
 
--- ========== QUICK PANEL LIBRARY ==========
+-- ========== QUICK PANEL LIBRARY (FIXED - MANUAL POSITIONING) ==========
 local QuickPanelLibrary = {}
 QuickPanelLibrary.__index = QuickPanelLibrary
 
@@ -297,9 +297,9 @@ function QuickPanelLibrary:New()
 		end
 	end
 	
-	-- Buat Frame (Rounded Rectangle)
+	-- Buat Frame (Rounded Rectangle) - LEBAR SAMA SEPERTI ORIGINAL
 	self.Frame = Instance.new("Frame")
-	self.Frame.Size = UDim2.new(0, 295, 0, 85) -- Start with title height only
+	self.Frame.Size = UDim2.new(0, 295, 0, 320)
 	self.Frame.Position = UDim2.new(0.5000, 236, 0.5000, -203)
 	self.Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 	self.Frame.BackgroundTransparency = 0.15
@@ -374,25 +374,21 @@ function QuickPanelLibrary:New()
 	self.MinimizeButton.Font = Enum.Font.Gotham
 	self.MinimizeButton.Parent = self.Frame
 	
-	-- CONTAINER UNTUK CONTENT
+	-- CONTAINER UNTUK CONTENT (TIADA UILISTLAYOUT)
 	self.ContentFrame = Instance.new("Frame")
 	self.ContentFrame.Size = UDim2.new(1, 0, 1, -45)
 	self.ContentFrame.Position = UDim2.new(0, 0, 0, 45)
 	self.ContentFrame.BackgroundTransparency = 1
 	self.ContentFrame.Parent = self.Frame
 	
-	-- UIListLayout untuk auto-arrange items
-	self.Layout = Instance.new("UIListLayout")
-	self.Layout.SortOrder = Enum.SortOrder.LayoutOrder
-	self.Layout.Padding = UDim.new(0, 10)
-	self.Layout.Parent = self.ContentFrame
-	
-	-- UIPadding
-	local contentPadding = Instance.new("UIPadding")
-	contentPadding.PaddingLeft = UDim.new(0, 7)
-	contentPadding.PaddingRight = UDim.new(0, 7)
-	contentPadding.PaddingTop = UDim.new(0, 10)
-	contentPadding.Parent = self.ContentFrame
+	-- DIVIDER VERTIKAL DI TENGAH GUI
+	self.CenterDivider = Instance.new("Frame")
+	self.CenterDivider.Size = UDim2.new(0, 1, 1, -52)
+	self.CenterDivider.Position = UDim2.new(0.5, 0, 0, 42)
+	self.CenterDivider.BackgroundColor3 = Color3.fromRGB(139, 0, 0)
+	self.CenterDivider.BackgroundTransparency = 0.45
+	self.CenterDivider.BorderSizePixel = 0
+	self.CenterDivider.Parent = self.Frame
 	
 	-- Track elements
 	self.Elements = {}
@@ -402,15 +398,6 @@ function QuickPanelLibrary:New()
 	-- Minimize functionality
 	self.MinimizeButton.MouseButton1Click:Connect(function()
 		self:ToggleMinimize()
-	end)
-	
-	-- Update size when items added
-	self.Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		if not self.IsMinimized then
-			local newHeight = 45 + self.Layout.AbsoluteContentSize.Y + 20
-			self.Frame.Size = UDim2.new(0, 295, 0, newHeight)
-			self.OriginalSize = self.Frame.Size
-		end
 	end)
 	
 	-- Protect GUI
@@ -427,6 +414,7 @@ function QuickPanelLibrary:ToggleMinimize()
 		self.MinimizeButton.Text = "+"
 		self.Divider.Visible = false
 		self.ContentFrame.Visible = false
+		self.CenterDivider.Visible = false
 		self.IsMinimized = true
 	else
 		local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
@@ -435,13 +423,16 @@ function QuickPanelLibrary:ToggleMinimize()
 		self.MinimizeButton.Text = "–"
 		self.Divider.Visible = true
 		self.ContentFrame.Visible = true
+		self.CenterDivider.Visible = true
 		self.IsMinimized = false
 	end
 end
 
 function QuickPanelLibrary:AddToggle(options)
+	-- TOGGLE DI KIRI (POSITION KIRI)
 	local toggleFrame = Instance.new("Frame")
-	toggleFrame.Size = UDim2.new(1, 0, 0, 30)
+	toggleFrame.Size = UDim2.new(0, 133, 0, 30)
+	toggleFrame.Position = UDim2.new(0, 7, 0, 10) -- KIRI
 	toggleFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 	toggleFrame.BackgroundTransparency = 0.45
 	toggleFrame.BorderSizePixel = 0
@@ -467,7 +458,7 @@ function QuickPanelLibrary:AddToggle(options)
 	toggleGradient.Parent = toggleFrameStroke
 	
 	local toggleText = Instance.new("TextLabel")
-	toggleText.Size = UDim2.new(0, 200, 1, 0)
+	toggleText.Size = UDim2.new(0, 80, 1, 0)
 	toggleText.Position = UDim2.new(0, 8, 0, 0)
 	toggleText.BackgroundTransparency = 1
 	toggleText.Text = options.Title or "Toggle"
@@ -531,8 +522,10 @@ function QuickPanelLibrary:AddToggle(options)
 end
 
 function QuickPanelLibrary:AddButton(options)
+	-- BUTTON DI KANAN (POSITION KANAN)
 	local actionButton = Instance.new("TextButton")
-	actionButton.Size = UDim2.new(1, 0, 0, 30)
+	actionButton.Size = UDim2.new(0, 133, 0, 30)
+	actionButton.Position = UDim2.new(0.5, 7, 0, 10) -- KANAN (0.5 = tengah, +7 offset)
 	actionButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 	actionButton.BackgroundTransparency = 0.45
 	actionButton.BorderSizePixel = 0
