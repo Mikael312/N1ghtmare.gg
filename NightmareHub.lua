@@ -278,7 +278,7 @@ local function protectGui(gui)
     end
 end
 
--- ========== QUICK PANEL LIBRARY (FIXED - MANUAL POSITIONING) ==========
+-- ========== QUICK PANEL LIBRARY (FIXED - MANUAL POSITIONING WITH AUTO Y-OFFSET) ==========
 local QuickPanelLibrary = {}
 QuickPanelLibrary.__index = QuickPanelLibrary
 
@@ -299,7 +299,7 @@ function QuickPanelLibrary:New()
 	
 	-- Buat Frame (Rounded Rectangle) - LEBAR SAMA SEPERTI ORIGINAL
 	self.Frame = Instance.new("Frame")
-	self.Frame.Size = UDim2.new(0, 295, 0, 320)
+	self.Frame.Size = UDim2.new(0, 295, 0, 85) -- Start with minimal height
 	self.Frame.Position = UDim2.new(0.5000, 236, 0.5000, -203)
 	self.Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 	self.Frame.BackgroundTransparency = 0.15
@@ -392,6 +392,8 @@ function QuickPanelLibrary:New()
 	
 	-- Track elements
 	self.Elements = {}
+	self.LeftItems = {} -- Track left side items (toggles)
+	self.RightItems = {} -- Track right side items (buttons)
 	self.IsMinimized = false
 	self.OriginalSize = self.Frame.Size
 	
@@ -404,6 +406,19 @@ function QuickPanelLibrary:New()
 	protectGui(self.ScreenGui)
 	
 	return self
+end
+
+function QuickPanelLibrary:UpdateFrameSize()
+	-- Calculate required height based on items
+	local maxRows = math.max(#self.LeftItems, #self.RightItems)
+	local contentHeight = (maxRows * 30) + ((maxRows - 1) * 10) + 20 -- items + spacing + padding
+	local totalHeight = 45 + contentHeight -- title + content
+	
+	self.Frame.Size = UDim2.new(0, 295, 0, totalHeight)
+	self.OriginalSize = self.Frame.Size
+	
+	-- Update center divider height
+	self.CenterDivider.Size = UDim2.new(0, 1, 0, contentHeight)
 end
 
 function QuickPanelLibrary:ToggleMinimize()
@@ -429,10 +444,13 @@ function QuickPanelLibrary:ToggleMinimize()
 end
 
 function QuickPanelLibrary:AddToggle(options)
+	-- Calculate Y position based on number of left items
+	local yPos = 10 + (#self.LeftItems * 40) -- 10px start + (index * (30px height + 10px spacing))
+	
 	-- TOGGLE DI KIRI (POSITION KIRI)
 	local toggleFrame = Instance.new("Frame")
 	toggleFrame.Size = UDim2.new(0, 133, 0, 30)
-	toggleFrame.Position = UDim2.new(0, 7, 0, 10) -- KIRI
+	toggleFrame.Position = UDim2.new(0, 7, 0, yPos) -- DYNAMIC Y POSITION
 	toggleFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 	toggleFrame.BackgroundTransparency = 0.45
 	toggleFrame.BorderSizePixel = 0
@@ -518,14 +536,20 @@ function QuickPanelLibrary:AddToggle(options)
 	end)
 	
 	table.insert(self.Elements, toggleFrame)
+	table.insert(self.LeftItems, toggleFrame) -- Track as left item
+	self:UpdateFrameSize() -- Update frame size
+	
 	return toggleFrame
 end
 
 function QuickPanelLibrary:AddButton(options)
+	-- Calculate Y position based on number of right items
+	local yPos = 10 + (#self.RightItems * 40) -- 10px start + (index * (30px height + 10px spacing))
+	
 	-- BUTTON DI KANAN (POSITION KANAN)
 	local actionButton = Instance.new("TextButton")
 	actionButton.Size = UDim2.new(0, 133, 0, 30)
-	actionButton.Position = UDim2.new(0.5, 7, 0, 10) -- KANAN (0.5 = tengah, +7 offset)
+	actionButton.Position = UDim2.new(0.5, 7, 0, yPos) -- DYNAMIC Y POSITION
 	actionButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 	actionButton.BackgroundTransparency = 0.45
 	actionButton.BorderSizePixel = 0
@@ -560,6 +584,9 @@ function QuickPanelLibrary:AddButton(options)
 	end)
 	
 	table.insert(self.Elements, actionButton)
+	table.insert(self.RightItems, actionButton) -- Track as right item
+	self:UpdateFrameSize() -- Update frame size
+	
 	return actionButton
 end
 
