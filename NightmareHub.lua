@@ -7,16 +7,13 @@ local SoundService = game:GetService("SoundService")
 local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 
--- ========== CONFIG SYSTEM ==========
+-- ========== CONFIG SYSTEM (SHARED GLOBAL) ==========
 local ConfigSystem = {}
 
 ConfigSystem.ConfigFile = "NightmareV1_Config.json"
 
 -- Default config
-ConfigSystem.DefaultConfig = {
-	InvisPanel = false,
-	InfJump = false
-}
+ConfigSystem.DefaultConfig = {}
 
 -- Load config dari file
 function ConfigSystem:Load()
@@ -64,17 +61,16 @@ function ConfigSystem:UpdateSetting(config, key, value)
 	self:Save(config)
 end
 
--- Load config masa startup
-local currentConfig = ConfigSystem:Load()
+-- Load config masa startup (GLOBAL STATE)
+ConfigSystem.CurrentConfig = ConfigSystem:Load()
 
 -- ========== NOTIFICATION SYSTEM ==========
-local activeNotifications = {} -- Track semua active notifs
+local activeNotifications = {}
 local NOTIF_HEIGHT = 60
 local NOTIF_SPACING = 10
 local MAX_NOTIFS = 3
 
 function updateNotificationPositions()
-	-- Update position semua notifs
 	for i, notifData in ipairs(activeNotifications) do
 		local newYPos = 20 + ((i - 1) * (NOTIF_HEIGHT + NOTIF_SPACING))
 		local moveTween = TweenService:Create(notifData.frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -85,7 +81,6 @@ function updateNotificationPositions()
 end
 
 function removeNotification(notifData)
-	-- Remove dari active list
 	for i, data in ipairs(activeNotifications) do
 		if data == notifData then
 			table.remove(activeNotifications, i)
@@ -96,17 +91,13 @@ function removeNotification(notifData)
 end
 
 function showNotification(message)
-	-- Kalau dah ada MAX_NOTIFS, remove yang paling lama (index 1)
 	if #activeNotifications >= MAX_NOTIFS then
 		local oldestNotif = activeNotifications[1]
 		
-		-- Remove dari list DULU
 		table.remove(activeNotifications, 1)
 		
-		-- Update position notifs yang tinggal (naik ke atas)
 		updateNotificationPositions()
 		
-		-- LEPAS TU baru tween keluar yang lama
 		local tweenOut = TweenService:Create(oldestNotif.frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
 			Position = UDim2.new(1, 10, 0, oldestNotif.frame.Position.Y.Offset)
 		})
@@ -116,7 +107,6 @@ function showNotification(message)
 		end)
 	end
 	
-	-- Buat notification GUI di COREGUI (FIXED)
 	local screenGui = CoreGui:FindFirstChild("NotificationGui")
 	if not screenGui then
 		screenGui = Instance.new("ScreenGui")
@@ -125,24 +115,20 @@ function showNotification(message)
 		screenGui.Parent = CoreGui
 	end
 	
-	-- Calculate position untuk notif baru (di bawah semua notif yang ada)
 	local startYPos = 20 + (#activeNotifications * (NOTIF_HEIGHT + NOTIF_SPACING))
 	
-	-- Buat notification frame
 	local notif = Instance.new("Frame")
 	notif.Size = UDim2.new(0, 250, 0, NOTIF_HEIGHT)
-	notif.Position = UDim2.new(1, 10, 0, startYPos) -- Start dari luar screen
+	notif.Position = UDim2.new(1, 10, 0, startYPos)
 	notif.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 	notif.BackgroundTransparency = 0.15
 	notif.BorderSizePixel = 0
 	notif.Parent = screenGui
 	
-	-- Rounded corners 8 pixel
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 8)
 	corner.Parent = notif
 	
-	-- Close button X (hujung kanan atas)
 	local closeButton = Instance.new("TextButton")
 	closeButton.Size = UDim2.new(0, 20, 0, 20)
 	closeButton.Position = UDim2.new(1, -25, 0, 5)
@@ -153,7 +139,6 @@ function showNotification(message)
 	closeButton.Font = Enum.Font.Gotham
 	closeButton.Parent = notif
 	
-	-- Text label untuk message
 	local textLabel = Instance.new("TextLabel")
 	textLabel.Size = UDim2.new(1, -50, 1, -10)
 	textLabel.Position = UDim2.new(0, 10, 0, 0)
@@ -167,7 +152,6 @@ function showNotification(message)
 	textLabel.TextWrapped = true
 	textLabel.Parent = notif
 	
-	-- Container untuk progress bar
 	local barContainer = Instance.new("Frame")
 	barContainer.Size = UDim2.new(1, 0, 0, 3)
 	barContainer.Position = UDim2.new(0, 0, 1, -3)
@@ -175,7 +159,6 @@ function showNotification(message)
 	barContainer.ClipsDescendants = true
 	barContainer.Parent = notif
 	
-	-- Progress bar dengan gradient
 	local progressBar = Instance.new("Frame")
 	progressBar.Size = UDim2.new(1, 0, 1, 0)
 	progressBar.Position = UDim2.new(0, 0, 0, 0)
@@ -183,12 +166,10 @@ function showNotification(message)
 	progressBar.BorderSizePixel = 0
 	progressBar.Parent = barContainer
 	
-	-- Rounded corners untuk bar
 	local barCorner = Instance.new("UICorner")
 	barCorner.CornerRadius = UDim.new(0, 2)
 	barCorner.Parent = progressBar
 	
-	-- Gradient untuk bar
 	local gradient = Instance.new("UIGradient")
 	gradient.Color = ColorSequence.new{
 		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 50, 50)),
@@ -196,7 +177,6 @@ function showNotification(message)
 	}
 	gradient.Parent = progressBar
 	
-	-- Play sound
 	local sound = Instance.new("Sound")
 	sound.SoundId = "rbxassetid://102467889710186"
 	sound.Volume = 0.5
@@ -206,7 +186,6 @@ function showNotification(message)
 		sound:Destroy()
 	end)
 	
-	-- Store notif data
 	local notifData = {
 		frame = notif,
 		progressBar = progressBar,
@@ -214,13 +193,11 @@ function showNotification(message)
 	}
 	table.insert(activeNotifications, notifData)
 	
-	-- Tween masuk
 	local tweenIn = TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 		Position = UDim2.new(1, -260, 0, startYPos)
 	})
 	tweenIn:Play()
 	
-	-- Bar drain dari KANAN ke KIRI (3 saat)
 	local barTween = TweenService:Create(progressBar, TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
 		Position = UDim2.new(1, 0, 0, 0),
 		Size = UDim2.new(0, 0, 1, 0)
@@ -228,14 +205,11 @@ function showNotification(message)
 	notifData.barTween = barTween
 	barTween:Play()
 	
-	-- Close button function
 	closeButton.MouseButton1Click:Connect(function()
-		-- Stop bar tween
 		if notifData.barTween then
 			notifData.barTween:Cancel()
 		end
 		
-		-- Tween keluar
 		local tweenOut = TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
 			Position = UDim2.new(1, 10, 0, notif.Position.Y.Offset)
 		})
@@ -247,11 +221,9 @@ function showNotification(message)
 		removeNotification(notifData)
 	end)
 	
-	-- Tunggu 3 saat, then tween keluar
 	task.spawn(function()
 		task.wait(3)
 		
-		-- Check kalau notif masih exist (mungkin user dah close manual)
 		if notif.Parent then
 			local tweenOut = TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
 				Position = UDim2.new(1, 10, 0, notif.Position.Y.Offset)
@@ -509,12 +481,22 @@ function QuickPanelLibrary:AddToggle(options)
 	circleCorner.CornerRadius = UDim.new(1, 0)
 	circleCorner.Parent = toggleCircle
 	
-	local toggleEnabled = options.Default or false
+	-- LOAD CONFIG (FIXED)
+	local configKey = options.ConfigKey or ("QuickPanel_" .. (options.Title or "Toggle"))
+	local toggleEnabled = ConfigSystem.CurrentConfig[configKey]
+	if toggleEnabled == nil then
+		toggleEnabled = options.Default or false
+	end
 	
-	-- Update visual based on default
+	-- Update visual based on saved config
 	if toggleEnabled then
 		toggleButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 		toggleCircle.Position = UDim2.new(0, 20, 0.5, -6)
+	end
+	
+	-- Call callback on initial load
+	if options.Callback then
+		options.Callback(toggleEnabled)
 	end
 	
 	toggleButton.MouseButton1Click:Connect(function()
@@ -529,6 +511,9 @@ function QuickPanelLibrary:AddToggle(options)
 			TweenService:Create(toggleButton, tweenInfo, {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
 			TweenService:Create(toggleCircle, tweenInfo, {Position = UDim2.new(0, 2, 0.5, -6)}):Play()
 		end
+		
+		-- SAVE TO CONFIG (FIXED)
+		ConfigSystem:UpdateSetting(ConfigSystem.CurrentConfig, configKey, toggleEnabled)
 		
 		if options.Callback then
 			options.Callback(toggleEnabled)
@@ -1582,11 +1567,21 @@ function MainHubLibrary:AddToggle(options)
 	toggleButton.Text = ""
 	toggleButton.Parent = toggleFrame
 	
-	local toggleEnabled = options.Default or false
+	-- LOAD CONFIG (FIXED)
+	local configKey = options.ConfigKey or ("MainHub_" .. tab .. "_" .. (options.Title or "Toggle"))
+	local toggleEnabled = ConfigSystem.CurrentConfig[configKey]
+	if toggleEnabled == nil then
+		toggleEnabled = options.Default or false
+	end
 	
-	-- Update visual based on default
+	-- Update visual based on saved config
 	if toggleEnabled then
 		toggleCircle.Position = UDim2.new(1, -16, 0.5, -7)
+	end
+	
+	-- Call callback on initial load
+	if options.Callback then
+		options.Callback(toggleEnabled)
 	end
 	
 	toggleButton.MouseButton1Click:Connect(function()
@@ -1603,6 +1598,9 @@ function MainHubLibrary:AddToggle(options)
 			Position = targetPos
 		})
 		circleTween:Play()
+		
+		-- SAVE TO CONFIG (FIXED)
+		ConfigSystem:UpdateSetting(ConfigSystem.CurrentConfig, configKey, toggleEnabled)
 		
 		if options.Callback then
 			options.Callback(toggleEnabled)
