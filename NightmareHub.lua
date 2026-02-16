@@ -786,7 +786,7 @@ function MainHubLibrary:New()
 	divider.Parent = self.Frame
 	
 	-- Tab Names
-	self.TabNames = {"Stealer", "Visual", "Misc", "Server", "Priority"}
+	self.TabNames = {"Stealer", "Visual", "Misc", "Server", "Credits"}
 	self.TabButtons = {}
 	self.TabFrames = {}
 	self.TabIndicators = {}
@@ -1744,18 +1744,73 @@ function MainHubLibrary:AddInput(options)
 	inputBox.TextTruncate = Enum.TextTruncate.AtEnd
 	inputBox.Parent = inputFrame
 	
+	-- MIN/MAX VALIDATION (OPTIONAL - only if Min or Max provided)
+	local hasMinMax = (options.Min ~= nil or options.Max ~= nil)
+	
+	if hasMinMax then
+		-- Force numeric input only
+		inputBox.TextChanged:Connect(function()
+			-- Remove non-numeric characters (allow negative sign and decimal point)
+			local text = inputBox.Text
+			text = text:gsub("[^%d%.%-]", "") -- Only allow digits, dot, and minus
+			
+			-- Ensure only one decimal point
+			local _, dotCount = text:gsub("%.", "")
+			if dotCount > 1 then
+				text = text:sub(1, -2) -- Remove last character
+			end
+			
+			-- Ensure minus sign only at start
+			if text:find("%-", 2) then
+				text = text:gsub("%-", "", 2) -- Remove minus after first position
+			end
+			
+			inputBox.Text = text
+		end)
+	end
+	
 	local inputBoxCorner = Instance.new("UICorner")
 	inputBoxCorner.CornerRadius = UDim.new(0, 4)
 	inputBoxCorner.Parent = inputBox
 	
 	inputBox.FocusLost:Connect(function(enterPressed)
+		local finalValue = inputBox.Text
+		
+		-- VALIDATE MIN/MAX (if provided)
+		if hasMinMax then
+			local numValue = tonumber(finalValue)
+			
+			if numValue then
+				-- Check MIN
+				if options.Min and numValue < options.Min then
+					numValue = options.Min
+					inputBox.Text = tostring(numValue)
+					showNotification("Value clamped to min: " .. options.Min)
+				end
+				
+				-- Check MAX
+				if options.Max and numValue > options.Max then
+					numValue = options.Max
+					inputBox.Text = tostring(numValue)
+					showNotification("Value clamped to max: " .. options.Max)
+				end
+				
+				finalValue = tostring(numValue)
+			else
+				-- Invalid number, reset to min or 0
+				finalValue = tostring(options.Min or 0)
+				inputBox.Text = finalValue
+				showNotification("Invalid number! Reset to " .. finalValue)
+			end
+		end
+		
 		if options.Callback then
-			options.Callback(inputBox.Text)
+			options.Callback(finalValue)
 		end
 	end)
 	
 	return inputFrame
-end
+end	
 
 function MainHubLibrary:Notify(message)
 	showNotification(message)
