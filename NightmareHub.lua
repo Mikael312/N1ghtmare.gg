@@ -499,18 +499,44 @@ function QuickPanelLibrary:AddToggle(options)
 		options.Callback(toggleEnabled)
 	end
 	
-	toggleButton.MouseButton1Click:Connect(function()
-		toggleEnabled = not toggleEnabled
-		
+	-- Function to update toggle state (INTERNAL)
+	local function updateToggleVisual(state)
 		local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		
-		if toggleEnabled then
+		if state then
 			TweenService:Create(toggleButton, tweenInfo, {BackgroundColor3 = Color3.fromRGB(255, 0, 0)}):Play()
 			TweenService:Create(toggleCircle, tweenInfo, {Position = UDim2.new(0, 20, 0.5, -6)}):Play()
 		else
 			TweenService:Create(toggleButton, tweenInfo, {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
 			TweenService:Create(toggleCircle, tweenInfo, {Position = UDim2.new(0, 2, 0.5, -6)}):Play()
 		end
+	end
+	
+	-- PUBLIC METHOD: Set toggle state programmatically (NEW)
+	local toggleObject = {
+		SetState = function(state, silent)
+			toggleEnabled = state
+			updateToggleVisual(state)
+			
+			-- Save to config
+			ConfigSystem:UpdateSetting(ConfigSystem.CurrentConfig, configKey, toggleEnabled)
+			
+			-- Call callback (unless silent mode)
+			if not silent and options.Callback then
+				options.Callback(toggleEnabled)
+			end
+		end,
+		
+		GetState = function()
+			return toggleEnabled
+		end,
+		
+		Frame = toggleFrame
+	}
+	
+	toggleButton.MouseButton1Click:Connect(function()
+		toggleEnabled = not toggleEnabled
+		updateToggleVisual(toggleEnabled)
 		
 		-- SAVE TO CONFIG (FIXED)
 		ConfigSystem:UpdateSetting(ConfigSystem.CurrentConfig, configKey, toggleEnabled)
@@ -524,9 +550,9 @@ function QuickPanelLibrary:AddToggle(options)
 	table.insert(self.LeftItems, toggleFrame) -- Track as left item
 	self:UpdateFrameSize() -- Update frame size
 	
-	return toggleFrame
+	return toggleObject -- RETURN TOGGLE OBJECT (NEW)
 end
-
+	
 function QuickPanelLibrary:AddButton(options)
 	-- Calculate Y position based on number of right items
 	local yPos = 10 + (#self.RightItems * 40) -- 10px start + (index * (30px height + 10px spacing))
