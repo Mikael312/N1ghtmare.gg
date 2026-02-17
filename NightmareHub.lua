@@ -679,7 +679,7 @@ function MainHubLibrary:New()
 	logoImage.Size = UDim2.new(0, 65, 0, 65)
 	logoImage.Position = UDim2.new(0, 10, 0, -3)
 	logoImage.BackgroundTransparency = 1
-	logoImage.Image = "rbxassetid://107226954986307"
+	logoImage.Image = "rbxassetid://88971623206128"
 	logoImage.ScaleType = Enum.ScaleType.Fit
 	logoImage.Parent = self.Frame
 	
