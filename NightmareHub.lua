@@ -626,8 +626,8 @@ function MainHubLibrary:New()
 	
 	-- Buat Toggle Button
 	self.ToggleButton = Instance.new("ImageButton")
-	self.ToggleButton.Size = UDim2.new(0, 60, 0, 60)
-	self.ToggleButton.Position = UDim2.new(0, 20, 0.5, -30)
+	self.ToggleButton.Size = UDim2.new(0, 45, 0, 45)
+	self.ToggleButton.Position = UDim2.new(0, 20, 0.5, -22)
 	self.ToggleButton.BackgroundTransparency = 1
 	self.ToggleButton.Image = "rbxassetid://88971623206128"
 	self.ToggleButton.Active = true
