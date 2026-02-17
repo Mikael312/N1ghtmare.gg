@@ -629,7 +629,7 @@ function MainHubLibrary:New()
 	self.ToggleButton.Size = UDim2.new(0, 60, 0, 60)
 	self.ToggleButton.Position = UDim2.new(0, 20, 0.5, -30)
 	self.ToggleButton.BackgroundTransparency = 1
-	self.ToggleButton.Image = "rbxassetid://121996261654076"
+	self.ToggleButton.Image = "rbxassetid://88971623206128"
 	self.ToggleButton.Active = true
 	self.ToggleButton.Draggable = true
 	self.ToggleButton.Parent = self.ScreenGui
@@ -679,7 +679,7 @@ function MainHubLibrary:New()
 	logoImage.Size = UDim2.new(0, 65, 0, 65)
 	logoImage.Position = UDim2.new(0, 10, 0, -3)
 	logoImage.BackgroundTransparency = 1
-	logoImage.Image = "rbxassetid://88971623206128"
+	logoImage.Image = "rbxassetid://107226954986307"
 	logoImage.ScaleType = Enum.ScaleType.Fit
 	logoImage.Parent = self.Frame
 	
