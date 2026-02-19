@@ -1770,25 +1770,27 @@ function MainHubLibrary:AddInput(options)
 	inputBox.TextTruncate = Enum.TextTruncate.AtEnd
 	inputBox.Parent = inputFrame
 	
-	-- MIN/MAX VALIDATION (OPTIONAL - only if Min or Max provided)
+-- MIN/MAX VALIDATION (OPTIONAL - only if Min or Max provided)
 	local hasMinMax = (options.Min ~= nil or options.Max ~= nil)
 	
 	if hasMinMax then
+		task.wait() -- TAMBAH LINE NI! ✅
+		
 		-- Force numeric input only
 		inputBox.TextChanged:Connect(function()
 			-- Remove non-numeric characters (allow negative sign and decimal point)
 			local text = inputBox.Text
-			text = text:gsub("[^%d%.%-]", "") -- Only allow digits, dot, and minus
+			text = text:gsub("[^%d%.%-]", "")
 			
 			-- Ensure only one decimal point
 			local _, dotCount = text:gsub("%.", "")
 			if dotCount > 1 then
-				text = text:sub(1, -2) -- Remove last character
+				text = text:sub(1, -2)
 			end
 			
 			-- Ensure minus sign only at start
 			if text:find("%-", 2) then
-				text = text:gsub("%-", "", 2) -- Remove minus after first position
+				text = text:gsub("%-", "", 2)
 			end
 			
 			inputBox.Text = text
